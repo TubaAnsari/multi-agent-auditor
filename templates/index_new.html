@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Code Auditor - AI Powered Code Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #6b5b95 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 50px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #2ecc71;
+            background: #e8f5e9;
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #2ecc71;
+            background: #e8f5e9;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-area h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .selected-file {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .selected-file.active {
+            display: block;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .result-card h3 {
+            margin-bottom: 10px;
+        }
+
+        .result-card p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .feature h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .feature p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Multi-Agent Code Auditor</h1>
+            <p>3 AI agents working together to review, test, and document your code</p>
+        </div>
+
+        <div class="card">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h3>Drop your code file here</h3>
+                <p>or click to browse</p>
+                <input type="file" id="fileInput" class="file-input" accept=".py,.js,.java,.cpp,.c,.h,.html,.css,.rb,.go,.rs,.txt">
+                <button class="btn" id="browseBtn">Browse Files</button>
+                <button class="btn btn-primary" id="analyzeBtn" disabled>Analyze Code</button>
+            </div>
+
+            <div class="selected-file" id="selectedFile">
+                <strong>Selected file:</strong> <span id="fileName"></span>
+            </div>
+
+            <div class="loader" id="loader">
+                <div class="spinner"></div>
+                <p>🤖 Agent 1: Analyzing code...</p>
+                <p style="font-size: 0.9em; margin-top: 10px;">This takes 30-60 seconds</p>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <strong>Error:</strong> <span id="errorText"></span>
+            </div>
+
+            <div class="results" id="results">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">✅ Analysis Complete!</h3>
+                <div id="resultsList"></div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🔍</div>
+                <h4>Code Review</h4>
+                <p>AI finds bugs, security issues, and performance problems</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🧪</div>
+                <h4>Test Generation</h4>
+                <p>Automatically creates pytest unit tests</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📝</div>
+                <h4>Documentation</h4>
+                <p>Generates professional README files</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const selectedFileDiv = document.getElementById('selectedFile');
+        const fileNameSpan = document.getElementById('fileName');
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
+        const resultsList = document.getElementById('resultsList');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        // Browse button click
+        browseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                fileNameSpan.textContent = selectedFile.name;
+                selectedFileDiv.classList.add('active');
+                analyzeBtn.disabled = false;
+                analyzeBtn.style.opacity = '1';
+            }
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target === uploadArea || e.target === browseBtn || e.target === uploadArea.querySelector('h3') || e.target === uploadArea.querySelector('p')) {
+                fileInput.click();
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                fileNameSpan.textContent = selectedFile.name;
+                selectedFileDiv.classList.add('active');
+                analyzeBtn.disabled = false;
+                analyzeBtn.style.opacity = '1';
+                fileInput.files = files;
+            }
+        });
+
+        // Analyze button click
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Reset UI
+            errorMessage.classList.remove('active');
+            results.classList.remove('active');
+            loader.classList.add('active');
+            analyzeBtn.disabled = true;
+
+            // Update loader text dynamically
+            const loaderTexts = [
+                "🤖 Agent 1: Code Reviewer - Scanning for bugs...",
+                "🤖 Agent 2: Test Generator - Creating test suite...",
+                "🤖 Agent 3: Documentation Writer - Generating docs..."
+            ];
+            let textIndex = 0;
+            const loaderParagraph = loader.querySelector('p');
+            const interval = setInterval(() => {
+                if (textIndex < loaderTexts.length) {
+                    loaderParagraph.textContent = loaderTexts[textIndex];
+                    textIndex++;
+                }
+            }, 20000);
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                clearInterval(interval);
+
+                if (data.success) {
+                    loader.classList.remove('active');
+                    
+                    // Display results
+                    resultsList.innerHTML = '';
+                    const outputFiles = [
+                        { name: 'review_report.md', title: '📋 Code Review Report', desc: 'Detailed bug analysis, security risks, and style issues' },
+                        { name: 'test_suite.py', title: '🧪 Test Suite', desc: 'pytest unit tests covering edge cases' },
+                        { name: 'README.md', title: '📚 Documentation', desc: 'Professional README with API reference' }
+                    ];
+
+                    outputFiles.forEach(file => {
+                        const card = document.createElement('div');
+                        card.className = 'result-card';
+                        card.onclick = () => window.location.href = `/download/${file.name}`;
+                        card.innerHTML = `
+                            <h3>${file.title}</h3>
+                            <p>${file.desc}</p>
+                            <small>Click to download →</small>
+                        `;
+                        resultsList.appendChild(card);
+                    });
+
+                    results.classList.add('active');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                clearInterval(interval);
+                loader.classList.remove('active');
+                errorText.textContent = error.message;
+                errorMessage.classList.add('active');
+                analyzeBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
